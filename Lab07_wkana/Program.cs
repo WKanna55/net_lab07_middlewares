@@ -16,6 +16,9 @@ builder.Services.AddSwaggerGen();
 // ------------------------- app construida -------------------------
 var app = builder.Build();
 
+// REGISTRAR PRIMERO el middleware de manejo de errores
+app.UseMiddleware<ErrorHandlingMiddleware>(); // Registrar el middleware de manejo de errores
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -34,12 +37,16 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+// registrar middleware de validacion de parametros
+app.UseMiddleware<ParameterValidationMiddleware>();
+
+app.UseAuthorization();
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-// registrar middleware de validacion de parametros
-app.UseMiddleware<ParameterValidationMiddleware>();
 
 // -------------------------------- Correr app --------------------------------
 app.Run();

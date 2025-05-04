@@ -12,4 +12,11 @@ public class ProductController : ControllerBase
     {
         return Ok(new { message = "Producto creado exitosamente" });
     }
+    
+    [HttpPost("error")]
+    public IActionResult ErrorTrowher([FromBody] CreateProductDto product)
+    {
+        throw new Exception("Simulación de error");
+    }
+    
 }
