@@ -1,0 +1,58 @@
+## ========== .NET ==========
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pidb
+*.svclog
+*.dbmdl
+*.pdb
+*.cache
+*.log
+
+# Auto-generated files
+Generated_Code/
+
+# ASP.NET secrets
+secrets.json
+
+# DotNet CLI
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+*.nuspec
+*.psmdcp
+
+# Entity Framework Migrations snapshots
+*MigrationsSnapshot.cs
+
+## ========== Rider ==========
+.idea/
+*.sln.iml
+
+# Rider working folders
+.idea/
+*.iml
+
+## ========== OS ==========
+.DS_Store
+Thumbs.db
+
+## ========== Env & Config ==========
+.env
+*.local.json
+appsettings.Development.json
+#wwwroot/
+
+## ========== Logs ==========
+*.log
+
+# Rider launch settings
+*.DotSettings.user
