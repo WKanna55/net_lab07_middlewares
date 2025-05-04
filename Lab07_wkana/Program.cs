@@ -1,4 +1,8 @@
+using System.Text;
 using Lab07_wkana.Middlewares;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,10 +12,54 @@ builder.Services.AddOpenApi();
 // Add services to the container.
 builder.Services.AddControllers();
 
+// ------------------------- Configuracion de JWT -------------------------
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["SecretKey"];
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
+        };
+    });
+
 // instalacion swagger 
 builder.Services.AddEndpointsApiExplorer();
 // codiguracion de swagger para poder pasar bearer en el header de la peticion
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    // Configuración de JWT Bearer en Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "Please enter your JWT token",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        BearerFormat = "JWT"
+    });
+    
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 
 // ------------------------- app construida -------------------------
 var app = builder.Build();
@@ -38,14 +86,33 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-// registrar middleware de validacion de parametros
-app.UseMiddleware<ParameterValidationMiddleware>();
+// 2. Autenticación y autorización
+app.UseAuthentication(); // Primero autenticación parte 3
+app.UseAuthorization();  // Luego autorización parte 3
 
-app.UseAuthorization();
 
+// 3. Middlewares personalizados
+//app.UseMiddleware<RoleBasedAccessMiddleware>(); // Registrar el middleware de gestión de roles
+app.UseMiddleware<ParameterValidationMiddleware>(); // registrar middleware de validacion de parametros
+
+
+// Aplicar middleware solo para /api/Auth/admin
+app.MapWhen(context => context.Request.Path.StartsWithSegments("/api/Auth/admin"), authApp =>
+{
+    authApp.UseMiddleware<RoleBasedAccessMiddleware>(); // Aquí aplicas el middleware específico para /api/Auth/admin
+    authApp.UseRouting();
+    //authApp.UseAuthentication();
+    //authApp.UseAuthorization();
+    authApp.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+    });
+});
+
+// Mapeo de controladores
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapControllers();
+    endpoints.MapControllers(); // Este mapeo debe estar fuera de MapWhen
 });
 
 // -------------------------------- Correr app --------------------------------
